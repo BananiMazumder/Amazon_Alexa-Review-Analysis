@@ -1,0 +1,321 @@
+
+# coding: utf-8
+
+# # Amazon_Alexa Customer Review Analysis
+
+# ## About The Data: 
+# This dataset consists of a nearly 3000 Amazon customer reviews (input text), star ratings, date of review, variant and feedback of various amazon Alexa products like Alexa Echo, Echo dots, Alexa Firesticks etc.
+# 
+# From this data we are analyzing the reviews to be positive or negative for different amazon products(Sentiment Analysis).
+
+#  Sentiment essentially relates to feelings; attitudes, emotions and opinions. Sentiment Analysis refers to the practice of applying Natural Language Processing and Text Analysis techniques to identify and extract subjective information from a piece of text. A person’s opinion or feelings are for the most part subjective and not facts. Which means to accurately analyze an individual’s opinion or mood from a piece of text can be extremely difficult. With Sentiment Analysis from a text analytics point of view, we are essentially looking to get an understanding of the attitude of a writer with respect to a topic in a piece of text and its polarity; whether it’s positive or negative. 
+#  
+# In relation to sentiment analysis, we’re talking about insights into consumer behaviour, what our customers want, what are customers like and dislike about our products, what their buying signals are, what their decision process looks like etc.
+# 
+# Businesses are trying to unlock the hidden value of text in order to understand their customers’ opinions and needs and make better, more informed, business decisions. Traditionally businesses relied on surveys, workshops and focus groups to gain insight into their customers opinions and feelings, but today with modern technology we are able to harness the power of Machine Learning and Artificial Intelligence to extract meaning from text and dive into opinions of customers and see them outside of the often controlled environment of a survey.
+
+# ## What can we Analyze?  
+# There is a wealth of information out there hidden in individual comments, reviews and the challenge is wrangling all of this info and extracting value from it.
+
+# By using NLP methods we can analyse the texts and further fit into a classification model to classify the positive and negative reviews.
+# Here we are using two classification algorithms to predict whether the review is positive or negative and build the better model for analysig the customer reviews. 
+
+# # Let's dive into programming!
+
+# ## Step 1: 
+# At first we would import the important libraries and the packages to move forward in coding.
+
+# # Importing libraries
+
+# In[1]:
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+# The libraries are now imported successfully!
+
+# ## Step 2:
+# Now we will load the data from the directory(We have downloaded the data from Kaggle.com).
+# 
+# To load the data we use read_csv function of pandas library.
+
+# # Loading the dataset
+
+# In[2]:
+
+
+data = pd.read_csv('amazon_alexa.tsv' , delimiter = '\t' , quoting=3)
+
+
+# Data is loaded successfully.
+# As the data was '.tsv'(Tab separated value) file,for that matter we specified the delimiter as 'tab'('\t') and 'quoting=3' takes care of the 'double quotes'("") in the data.
+
+# # Viewing the data
+
+# In[3]:
+
+
+data.head(8)
+
+
+# The above table gives an overview of the dataset.The column_names and the type of data it consist.
+
+# ## Step 3:
+# Now to proceed furthermore,we have to clean the data.
+# First we imported the re package that handle the Regular Expression in python.
+# Then we imported Natural Language Toolkit.
+# The NLTK package consist the built-in stopwords documentation that contain the words that are irrelevant in determining the reviews.
+# The sub packages of NLTK, stem.porter are imported to stem(remove) the sparsity of the words that have similar meaning.
+
+# # Cleaning the dataset
+
+# In[4]:
+
+
+import re
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+
+
+# Here,we create a list of all the words that are used uniquely in the entire dataset,without taking into account of the punctuations and all the other irrelevant characters of the data.
+
+# In[5]:
+
+
+corpus = []
+for i in range(0, 3150):
+    review = re.sub('[^a-zA-Z]' , ' ', data['verified_reviews'][i])
+    review = review.lower()
+    review = review.split()
+    ps = PorterStemmer()
+    review = [ps.stem(word) for word in review if not word in set(stopwords.words('english'))]
+    review = ' '.join(review)
+    corpus.append(review)
+
+
+# ## Step 4:
+# Now we will create the bag of words model.It indicates that a bag that contains all the words that are used in the reviews frequently or the different but unique words.
+# This will create one column for each word,that makes a table that corresponds to all the reviews in the dataset.
+
+# # Creating bag of words model
+
+# We imported CountVectorizer method from the sklearn library,that Convert a collection of text documents to a matrix of token counts.
+# Created an object of that class and set the parameter of max_features to a number that relatively gives the frequently used words.
+# 
+# Then we fit the updated data into 'corpus' objected we created earlier and create an array of the indepedent variables and stored them in a matrix.And differentiated the dependent variable.
+
+# In[6]:
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+
+
+# In[7]:
+
+
+cv = CountVectorizer(max_features= 2700)
+X = cv.fit_transform(corpus).toarray()
+y = data.iloc[: , 4].values
+
+
+# For classification we used two different algorithms and then compared both the accuracy to make better predictive model.
+# # Naive Bayes Algorithm: 
+# Naive Bayes classifiers are a collection of classification algorithms based on Bayes’ Theorem. It is not a single algorithm but a family of algorithms where all of them share a common principle, i.e. every pair of features being classified is independent of each other.
+# Naive Bayes can be extended to real-valued attributes, most commonly by assuming a Gaussian distribution.
+# 
+# This extension of naive Bayes is called Gaussian Naive Bayes. Other functions can be used to estimate the distribution of the data, but the Gaussian (or Normal distribution) is the easiest to work with because you only need to estimate the mean and the standard deviation from your training data.
+# 
+# # Random Forest Algorithm:
+# Random Forest is a flexible, easy to use machine learning algorithm that produces, even without hyper-parameter tuning, a great result most of the time. It is also one of the most used algorithms, because it’s simplicity and the fact that it can be used for both classification and regression tasks.
+# In general, the more trees in the forest the more robust the forest looks like. In the same way in the random forest classifier, the higher the number of trees in the forest gives the high accuracy results.
+
+# ## Step 5:
+# # Applying Naive Bayes method
+
+# # Splitting the dataset into the Training set and Test set
+# 
+# First we split the dataset into two parts.Test data and Train Data.We would build the model by training it with train data and then test the accuracy of the model with the test data and our predicted values.
+# 
+# We have taken 25% of the entire dataset as our test data.
+
+# In[9]:
+
+
+from sklearn.cross_validation import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
+
+
+# # Fitting Naive Bayes to the Training set
+
+# In[10]:
+
+
+from sklearn.naive_bayes import GaussianNB
+classifier = GaussianNB()
+classifier.fit(X_train, y_train)
+
+
+# We have successfully fitted our train model into Gaussian Naive Bayes model.
+
+# # Predicting the Test set results
+# 
+# The predict function gives us the predicted value of the dependent variable.
+
+# In[11]:
+
+
+y_pred = classifier.predict(X_test)
+
+
+# # Making the Confusion Matrix
+# 
+# Now we make the confusion matrix to see the performance of the model on test data.
+# Then plot the confusion matrix and print the accuracy score and classification report to analyse the performance of the model.
+
+# In[12]:
+
+
+from sklearn.metrics import confusion_matrix , accuracy_score , classification_report
+cm = confusion_matrix(y_test, y_pred)
+print("Confusion matrix:\n%s" % cm)
+plt.clf()
+plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Wistia)
+classNames = ['Negative','Positive']
+plt.title('Positive or Negative Review Confusion Matrix - Test Data')
+plt.ylabel('True label')
+plt.xlabel('Predicted label')
+tick_marks = np.arange(len(classNames))
+plt.xticks(tick_marks, classNames, rotation=45)
+plt.yticks(tick_marks, classNames)
+s = [['True-N','False-P'], ['False-N', 'True-P']]
+for i in range(2):
+    for j in range(2):
+        plt.text(j,i, str(s[i][j])+" = "+str(cm[i][j]))
+plt.show()
+print('Accuracy:',accuracy_score(y_test,y_pred))
+print('Classification Report:',classification_report(y_test,y_pred))
+
+
+# This algorithm predicted **55%** accurate model.That is not quite good model to proceed.
+# So we applied another algorithm,Random Forest Algorithm.
+
+# Cross Validation is used to assess the predictive performance of the models and and to judge how they perform outside the sample to a new data set also known as test data
+# The motivation to use cross validation techniques is that when we fit a model, we are fitting it to a training dataset. Without cross validation we only have information on how does our model perform to our in-sample data. Ideally we would like to see how does the model perform when we have a new data in terms of accuracy of its predictions. In science, theories are judged by its predictive performance.  
+# We applied Kfold Cross Validation method here.
+
+# # Cross validation
+# 
+# # Applying k-Fold Cross Validation
+
+# In[14]:
+
+
+from sklearn.model_selection import cross_val_score
+accuracies = cross_val_score(estimator = classifier, X = X_train, y = y_train, cv = 10)
+accuracies.mean()
+accuracies.std()
+
+print("Accuracy of Naive Bayes Algorithm is: " , accuracies)
+print("Accuracy of Naive Bayes Algorithm is: " , accuracies.mean())
+
+
+# ## Step 6:
+# # Applying Random Forest Algorithm
+
+# # Splitting the dataset into the Training set and Test set
+# 
+# First we split the dataset into two parts.Test data and Train Data.We would build the model by training it with train data and then test the accuracy of the model with the test data and our predicted values.
+# 
+# We have taken 25% of the entire dataset as our test data.
+
+# In[16]:
+
+
+from sklearn.cross_validation import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
+
+
+# # Fitting Random Forest Classification to the Training set
+# 
+# 
+
+# In[17]:
+
+
+from sklearn.ensemble import RandomForestClassifier
+classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)
+classifier.fit(X_train, y_train)
+
+
+# # Predicting the Test set results
+# 
+# We have successfully fitted our train data into RandomForest classifier.
+# The predict function of the classifier gives us the predicted value.
+
+# In[18]:
+
+
+y_pred = classifier.predict(X_test)
+
+
+# # Making the Confusion Matrix
+# 
+# Now we make the confusion matrix to see the performance of the model on test data. Then plot the confusion matrix and print the accuracy score and classification report to analyse the performance of the model.
+
+# In[19]:
+
+
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(y_test, y_pred)
+
+
+# In[20]:
+
+
+print("Confusion matrix:\n%s" % cm)
+plt.clf()
+plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Wistia)
+classNames = ['Negative','Positive']
+plt.title('Positive or Negative Review Confusion Matrix - Test Data')
+plt.ylabel('True label')
+plt.xlabel('Predicted label')
+tick_marks = np.arange(len(classNames))
+plt.xticks(tick_marks, classNames, rotation=45)
+plt.yticks(tick_marks, classNames)
+s = [['TN','FP'], ['FN', 'TP']]
+for i in range(2):
+    for j in range(2):
+        plt.text(j,i, str(s[i][j])+" = "+str(cm[i][j]))
+plt.show()
+print('Accuracy:',accuracy_score(y_test,y_pred))
+print('Classification Report:',classification_report(y_test,y_pred))
+
+
+# This algorithm predicted **93%** accurate model.
+
+# Cross Validation is used to assess the predictive performance of the models and and to judge how they perform outside the sample to a new data set also known as test data The motivation to use cross validation techniques is that when we fit a model, we are fitting it to a training dataset. Without cross validation we only have information on how does our model perform to our in-sample data. Ideally we would like to see how does the model perform when we have a new data in terms of accuracy of its predictions. In science, theories are judged by its predictive performance.
+# We applied Kfold Cross Validation method here.
+# 
+# # Cross validation
+# # Applying k-Fold Cross Validation
+
+# In[21]:
+
+
+from sklearn.model_selection import cross_val_score
+accuracies = cross_val_score(estimator = classifier, X = X_train, y = y_train, cv = 10)
+accuracies.mean()
+accuracies.std()
+
+print("Accuracy of Naive Bayes Algorithm is: " , accuracies)
+print("Accuracy of Naive Bayes Algorithm is: " , accuracies.mean())
+
+
+# So we can conclude that in this dataset RandomForest Algorithm outperforms the NaiveBayes Algorithm.
+# 
+# Great Job!
